@@ -62,6 +62,8 @@ main:
     cmp     rdx, rax
     jg      invalid_argv
 
+    xor     rdi, rdi
+
     # If the value is 0
     cmp     rax, rdx
     je      2f
@@ -72,11 +74,7 @@ main:
     xor     rsi, rsi
     # Second
     mov     r10, 1
-    xor     rdi, rdi
     xor     rdx, rdx
-
-    # Counter Check
-    mov     r8, 1
 
     # Fib Loop
 1:
@@ -85,7 +83,7 @@ main:
 
     inc     rcx
 
-    cmp     rcx, r8
+    cmp     rcx, 1
     je      1b
 
     xadd    r10, rsi
@@ -99,6 +97,9 @@ main:
     mov     QWORD PTR [result1], r10
     mov     QWORD PTR [result2], rdi
 
+    cmp     rdi, 0
+    je      3f     
+
     push    rbx
     mov     rdi, OFFSET hex_output1
     mov     rsi, 32
@@ -108,6 +109,7 @@ main:
 
     pop rbx
 
+3:
     push    rbx
     mov     rdi, OFFSET hex_output2
     mov     rsi, 32
