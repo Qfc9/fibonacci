@@ -72,7 +72,8 @@ main:
     xor     rsi, rsi
     # Second
     mov     r10, 1
-    xor     r9, r9
+    xor     rdi, rdi
+    xor     rdx, rdx
 
     # Counter Check
     mov     r8, 1
@@ -88,14 +89,15 @@ main:
     je      1b
 
     xadd    r10, rsi
-    adc     r9, 0
+    adc     rdx, 0
+    xadd    rdi, rdx
 
     jmp     1b
 
 2:
 
     mov     QWORD PTR [result1], r10
-    mov     QWORD PTR [result2], r9
+    mov     QWORD PTR [result2], rdi
 
     push    rbx
     mov     rdi, OFFSET hex_output1
