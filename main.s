@@ -42,7 +42,6 @@ invalid_argv:
 
 shift:
     add     rdi, 1
-    and     r10, r11
     jmp     main_loop
 
 .globl main
@@ -101,43 +100,31 @@ main_loop:
     adc     rdx, 0
     xadd    rdi, rdx
 
-    mov     r12, r10
-    and     r10, r11
-    cmp     r10, r12
-    jne     shift
+    # mov     r12, r10
+    # and     r10, r11
+    # cmp     r10, r12
+    # jne     shift
 
     jmp     1b
 
 2:
-
     mov     QWORD PTR [result1], r10
-    mov     QWORD PTR [result2], rdi
+    mov     QWORD PTR [result2], rdi     
 
-    # No 0
-    cmp     rdi, 0
-    je      3f     
+   # higher = 0
+    cmp     rax, 0
+    je      print_next
 
-    push    rbx
-    mov     rdi, OFFSET hex_output1
-    mov     rsi, 32
     mov     rcx, [result2]
-    mov     rdx, OFFSET oct_format
-    # mov     rdx, OFFSET hex_format
-    call    snprintf
+    mov     rdi, OFFSET hex_output1
+    jmp     bin_to_hex1
 
-    pop rbx
-
-3:
-    push    rbx
-    mov     rdi, OFFSET hex_output2
-    mov     rsi, 32
+print_next:
     mov     rcx, [result1]
-    mov     rdx, OFFSET oct_format
-    # mov     rdx, OFFSET hex_format
-    call    snprintf
+    mov     rdi, OFFSET hex_output2
+    jmp     bin_to_hex2
 
-    pop rbx
-
+print_result:
     # Printf result
     push    rbx
     mov     rdi, OFFSET result_output
@@ -151,3 +138,22 @@ main_loop:
 
 end:
     ret
+
+
+bin_to_hex1:
+    push    rbx
+    mov     rsi, 32
+    mov     rdx, OFFSET hex_format
+    call    snprintf
+
+    pop     rbx
+    jmp     print_next
+
+bin_to_hex2:
+    push    rbx
+    mov     rsi, 32
+    mov     rdx, OFFSET hex_format
+    call    snprintf
+
+    pop     rbx
+    jmp     print_result
