@@ -10,6 +10,9 @@ invalid_value_msg:
 hex_format:
     .asciz "%llx"
 
+oct_format:
+    .asciz "%llo"
+
 result1:
     .quad 0
 
@@ -25,7 +28,6 @@ hex_output2:
 result_output:
     .asciz "%s%s\n"
 
-
 .text
 
 invalid_argc:
@@ -37,6 +39,11 @@ invalid_argv:
     mov     edi, OFFSET invalid_value_msg
     call puts
     jmp end
+
+shift:
+    add     rdi, 1
+    and     r10, r11
+    jmp     main_loop
 
 .globl main
 main:
@@ -76,8 +83,12 @@ main:
     mov     r10, 1
     xor     rdx, rdx
 
+
+    mov     r11, 0x7FFFFFFFFFFFFFFF
+
     # Fib Loop
 1:
+main_loop:
     cmp     rcx, rax
     je      2f
 
@@ -90,6 +101,11 @@ main:
     adc     rdx, 0
     xadd    rdi, rdx
 
+    mov     r12, r10
+    and     r10, r11
+    cmp     r10, r12
+    jne     shift
+
     jmp     1b
 
 2:
@@ -97,6 +113,7 @@ main:
     mov     QWORD PTR [result1], r10
     mov     QWORD PTR [result2], rdi
 
+    # No 0
     cmp     rdi, 0
     je      3f     
 
@@ -104,7 +121,8 @@ main:
     mov     rdi, OFFSET hex_output1
     mov     rsi, 32
     mov     rcx, [result2]
-    mov     rdx, OFFSET hex_format
+    mov     rdx, OFFSET oct_format
+    # mov     rdx, OFFSET hex_format
     call    snprintf
 
     pop rbx
@@ -114,7 +132,8 @@ main:
     mov     rdi, OFFSET hex_output2
     mov     rsi, 32
     mov     rcx, [result1]
-    mov     rdx, OFFSET hex_format
+    mov     rdx, OFFSET oct_format
+    # mov     rdx, OFFSET hex_format
     call    snprintf
 
     pop rbx
