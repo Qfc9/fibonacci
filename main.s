@@ -7,14 +7,17 @@ invalid_arg_msg:
 invalid_value_msg:
     .asciz "Invalid value!\n"
 
+invalid_flag_msg:
+    .asciz "Invalid flag!\n"
+
 hex_format:
     .asciz "%llx"
 
-oct_option:
-    .asciz "o-"
-
 oct_format:
     .asciz "%llo"
+
+oct_flag:
+    .quad 0
 
 lower_bin:
     .quad 0
@@ -35,13 +38,18 @@ result_output:
 
 invalid_argc:
     mov     edi, OFFSET invalid_arg_msg
-    call puts
-    jmp end
+    call    puts
+    jmp     end
 
 invalid_argv:
     mov     edi, OFFSET invalid_value_msg
-    call puts
-    jmp end
+    call    puts
+    jmp     end
+
+invalid_flag:
+    mov     edi, OFFSET invalid_flag_msg
+    call    puts
+    jmp     end
 
 shift:
     add     rdi, 1
@@ -57,7 +65,6 @@ main:
     je      3f
 
     # Checks argc == 3
-    xor     eax, eax
     mov     edx, 3
     cmp     edx, edi
     je      4f
@@ -70,13 +77,15 @@ main:
     mov     rax, [rax]
     and     rax, 0x000000000000FFFF
     cmp     rax, 28461
-    jne      end
+    jne     invalid_flag
 
     # Making argv[1] into a number
     mov     rdi, [rsi + 8*2]
     mov     rsi, 0
     mov     rdx, 10    
     call    strtol
+    mov     QWORD PTR [oct_flag], 1
+    mov     QWORD PTR [oct_flag], 1
     jmp     the_cmp
 
 3:
@@ -108,7 +117,7 @@ the_cmp:
     # First
     xor     rsi, rsi
     # Second
-    mov     r10, 1
+    mov     r8, 1
     xor     rdx, rdx
 
 
@@ -125,19 +134,25 @@ main_loop:
     cmp     rcx, 1
     je      1b
 
-    xadd    r10, rsi
+    xadd    r8, rsi
     adc     rdx, 0
     xadd    rdi, rdx
 
-    # mov     r12, r10
-    # and     r10, r11
-    # cmp     r10, r12
-    # jne     shift
+    cmp     QWORD PTR [oct_flag], 1
+    je      oct_carry
 
     jmp     1b
 
+oct_carry:
+    mov     r12, r8
+    and     r8, r11
+    cmp     r8, r12
+    jne     shift
+    jmp     1b
+
+
 2:
-    mov     QWORD PTR [lower_bin], r10
+    mov     QWORD PTR [lower_bin], r8
     mov     QWORD PTR [higher_bin], rdi     
 
    # higher = 0
@@ -163,7 +178,17 @@ end:
 bin_to_hex1:
     push    rbx
     mov     rsi, 32
+    
+    cmp     QWORD PTR [oct_flag], 1
+    jne     1f
+
+    mov     rdx, OFFSET oct_format
+    jmp     2f
+
+1:
     mov     rdx, OFFSET hex_format
+
+2:
     call    snprintf
 
     pop     rbx
@@ -172,7 +197,17 @@ bin_to_hex1:
 bin_to_hex2:
     push    rbx
     mov     rsi, 32
+
+    cmp     QWORD PTR [oct_flag], 1
+    jne     1f
+
+    mov     rdx, OFFSET oct_format
+    jmp     2f
+
+1:
     mov     rdx, OFFSET hex_format
+
+2:
     call    snprintf
 
     pop     rbx
@@ -189,3 +224,4 @@ display_results:
     pop rbx
     xor     rax, rax
     jmp end
+
