@@ -1,13 +1,32 @@
 .intel_syntax noprefix
 
+.data
 invalid_arg_msg:
     .asciz "Invalid amount of args!\n"
 
 invalid_value_msg:
     .asciz "Invalid value!\n"
 
-asdf:
-    .asciz "%x answer\n"
+hex_format:
+    .asciz "%llx"
+
+result1:
+    .quad 0
+
+result2:
+    .quad 0
+
+hex_output1:
+    .asciz "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+
+hex_output2:
+    .asciz "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+
+result_output:
+    .asciz "%s%s\n"
+
+
+.text
 
 invalid_argc:
     mov     edi, OFFSET invalid_arg_msg
@@ -34,45 +53,77 @@ main:
     call    strtol
 
     # Checking if argv[0] <= 100
-    mov     rdx, 101
+    mov     rdx, 100
     cmp     rdx, rax
-    jle     invalid_argv
+    jl      invalid_argv
 
     # Checking if argv[0] > 0
-    mov     rdx, 0
+    xor     rdx, rdx
     cmp     rdx, rax
-    jge     invalid_argv
+    jg      invalid_argv
+
+    xor     rdi, rdi
+
+    # If the value is 0
+    cmp     rax, rdx
+    je      2f
 
     # Counter
-    mov     rcx, -1
+    mov     rcx, 0
     # First
     xor     rsi, rsi
     # Second
-    xor     rdx, 1
-    # Result
-    xor     rdi, rdi
+    mov     r10, 1
+    xor     rdx, rdx
 
-    mov     r8, 1
-
+    # Fib Loop
 1:
-    inc     rcx
-    cmp     rcx, r8
-    jle     1b
-
-    xadd    rdx, rsi
-
     cmp     rcx, rax
-    jne     1b
+    je      2f
 
+    inc     rcx
 
-    # mov     rdi, OFFSET asdf
-    # mov     rsi, rdx
-    # cld
+    cmp     rcx, 1
+    je      1b
+
+    xadd    r10, rsi
+    adc     rdx, 0
+    xadd    rdi, rdx
+
+    jmp     1b
+
+2:
+
+    mov     QWORD PTR [result1], r10
+    mov     QWORD PTR [result2], rdi
+
+    cmp     rdi, 0
+    je      3f     
 
     push    rbx
-    # lea     rdi, [rip]
-    mov     rdi, OFFSET asdf
-    mov     rsi, rdx
+    mov     rdi, OFFSET hex_output1
+    mov     rsi, 32
+    mov     rcx, [result2]
+    mov     rdx, OFFSET hex_format
+    call    snprintf
+
+    pop rbx
+
+3:
+    push    rbx
+    mov     rdi, OFFSET hex_output2
+    mov     rsi, 32
+    mov     rcx, [result1]
+    mov     rdx, OFFSET hex_format
+    call    snprintf
+
+    pop rbx
+
+    # Printf result
+    push    rbx
+    mov     rdi, OFFSET result_output
+    mov     rsi, OFFSET hex_output1
+    mov     rdx, OFFSET hex_output2
     xor     rax, rax
 
     call    printf
