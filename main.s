@@ -6,6 +6,9 @@ invalid_arg_msg:
 invalid_value_msg:
     .asciz "Invalid value!\n"
 
+asdf:
+    .asciz "%x answer\n"
+
 invalid_argc:
     mov     edi, OFFSET invalid_arg_msg
     call puts
@@ -39,6 +42,42 @@ main:
     mov     rdx, 0
     cmp     rdx, rax
     jge     invalid_argv
+
+    # Counter
+    mov     rcx, -1
+    # First
+    xor     rsi, rsi
+    # Second
+    xor     rdx, 1
+    # Result
+    xor     rdi, rdi
+
+    mov     r8, 1
+
+1:
+    inc     rcx
+    cmp     rcx, r8
+    jle     1b
+
+    xadd    rdx, rsi
+
+    cmp     rcx, rax
+    jne     1b
+
+
+    # mov     rdi, OFFSET asdf
+    # mov     rsi, rdx
+    # cld
+
+    push    rbx
+    # lea     rdi, [rip]
+    mov     rdi, OFFSET asdf
+    mov     rsi, rdx
+    xor     rax, rax
+
+    call    printf
+
+    pop rbx
 
 end:
     ret
