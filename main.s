@@ -13,16 +13,16 @@ hex_format:
 oct_format:
     .asciz "%llo"
 
-result1:
+lower_bin:
     .quad 0
 
-result2:
+higher_bin:
     .quad 0
 
-hex_output1:
+lower:
     .asciz "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
 
-hex_output2:
+higher:
     .asciz "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
 
 result_output:
@@ -108,33 +108,24 @@ main_loop:
     jmp     1b
 
 2:
-    mov     QWORD PTR [result1], r10
-    mov     QWORD PTR [result2], rdi     
+    mov     QWORD PTR [lower_bin], r10
+    mov     QWORD PTR [higher_bin], rdi     
 
    # higher = 0
-    cmp     rax, 0
+    cmp     rdi, 0
     je      print_next
 
-    mov     rcx, [result2]
-    mov     rdi, OFFSET hex_output1
+    mov     rcx, [higher_bin]
+    mov     rdi, OFFSET higher
     jmp     bin_to_hex1
 
 print_next:
-    mov     rcx, [result1]
-    mov     rdi, OFFSET hex_output2
+    mov     rcx, [lower_bin]
+    mov     rdi, OFFSET lower
     jmp     bin_to_hex2
 
-print_result:
-    # Printf result
-    push    rbx
-    mov     rdi, OFFSET result_output
-    mov     rsi, OFFSET hex_output1
-    mov     rdx, OFFSET hex_output2
-    xor     rax, rax
-
-    call    printf
-
-    pop rbx
+results:
+    jmp     display_results
 
 end:
     ret
@@ -156,4 +147,16 @@ bin_to_hex2:
     call    snprintf
 
     pop     rbx
-    jmp     print_result
+    jmp     results
+
+display_results:
+    # Printf result
+    push    rbx
+    mov     rdi, OFFSET result_output
+    mov     rsi, OFFSET higher
+    mov     rdx, OFFSET lower
+
+    call    printf
+    pop rbx
+    xor     rax, rax
+    jmp end
