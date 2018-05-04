@@ -7,7 +7,7 @@ invalid_value_msg:
     .asciz "Invalid value!\n"
 
 asdf:
-    .asciz "%x answer\n"
+    .asciz "%d\n"
 
 invalid_argc:
     mov     edi, OFFSET invalid_arg_msg
@@ -44,11 +44,11 @@ main:
     jge     invalid_argv
 
     # Counter
-    mov     rcx, -1
+    mov     rcx, 0
     # First
     xor     rsi, rsi
     # Second
-    xor     rdx, 1
+    mov     rdx, 1
     # Result
     xor     rdi, rdi
 
@@ -56,21 +56,17 @@ main:
 
 1:
     inc     rcx
+
     cmp     rcx, r8
-    jle     1b
+    je      2f
 
     xadd    rdx, rsi
 
+2:
     cmp     rcx, rax
-    jne     1b
-
-
-    # mov     rdi, OFFSET asdf
-    # mov     rsi, rdx
-    # cld
+    jne      1b
 
     push    rbx
-    # lea     rdi, [rip]
     mov     rdi, OFFSET asdf
     mov     rsi, rdx
     xor     rax, rax
