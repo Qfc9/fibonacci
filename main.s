@@ -34,14 +34,18 @@ main:
     call    strtol
 
     # Checking if argv[0] <= 100
-    mov     rdx, 101
+    mov     rdx, 100
     cmp     rdx, rax
-    jle     invalid_argv
+    jl      invalid_argv
 
     # Checking if argv[0] > 0
-    mov     rdx, 0
+    xor     rdx, rdx
     cmp     rdx, rax
-    jge     invalid_argv
+    jg      invalid_argv
+
+    # If the value is 0
+    cmp     rax, rdx
+    je      2f
 
     # Counter
     mov     rcx, 0
@@ -49,23 +53,26 @@ main:
     xor     rsi, rsi
     # Second
     mov     rdx, 1
-    # Result
-    xor     rdi, rdi
 
+    # Counter Check
     mov     r8, 1
 
+    # Fib Loop
 1:
+    cmp     rcx, rax
+    je      2f
+
     inc     rcx
 
     cmp     rcx, r8
-    je      2f
+    je      1b
 
     xadd    rdx, rsi
 
-2:
-    cmp     rcx, rax
-    jne      1b
+    jmp     1b
 
+2:
+    # Printf result
     push    rbx
     mov     rdi, OFFSET asdf
     mov     rsi, rdx
