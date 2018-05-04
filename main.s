@@ -1,13 +1,32 @@
 .intel_syntax noprefix
 
+.data
 invalid_arg_msg:
     .asciz "Invalid amount of args!\n"
 
 invalid_value_msg:
     .asciz "Invalid value!\n"
 
-asdf:
-    .asciz "%d\n"
+hex_format:
+    .asciz "%llx"
+
+result1:
+    .quad 0
+
+result2:
+    .quad 0
+
+hex_output1:
+    .asciz "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+
+hex_output2:
+    .asciz "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+
+result_output:
+    .asciz "%s%s\n"
+
+
+.text
 
 invalid_argc:
     mov     edi, OFFSET invalid_arg_msg
@@ -52,7 +71,8 @@ main:
     # First
     xor     rsi, rsi
     # Second
-    mov     rdx, 1
+    mov     r10, 1
+    xor     r9, r9
 
     # Counter Check
     mov     r8, 1
@@ -67,15 +87,39 @@ main:
     cmp     rcx, r8
     je      1b
 
-    xadd    rdx, rsi
+    xadd    r10, rsi
+    adc     r9, 0
 
     jmp     1b
 
 2:
+
+    mov     QWORD PTR [result1], r10
+    mov     QWORD PTR [result2], r9
+
+    push    rbx
+    mov     rdi, OFFSET hex_output1
+    mov     rsi, 32
+    mov     rcx, [result2]
+    mov     rdx, OFFSET hex_format
+    call    snprintf
+
+    pop rbx
+
+    push    rbx
+    mov     rdi, OFFSET hex_output2
+    mov     rsi, 32
+    mov     rcx, [result1]
+    mov     rdx, OFFSET hex_format
+    call    snprintf
+
+    pop rbx
+
     # Printf result
     push    rbx
-    mov     rdi, OFFSET asdf
-    mov     rsi, rdx
+    mov     rdi, OFFSET result_output
+    mov     rsi, OFFSET hex_output1
+    mov     rdx, OFFSET hex_output2
     xor     rax, rax
 
     call    printf
