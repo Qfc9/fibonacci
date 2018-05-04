@@ -10,6 +10,9 @@ invalid_value_msg:
 hex_format:
     .asciz "%llx"
 
+oct_option:
+    .asciz "o-"
+
 oct_format:
     .asciz "%llo"
 
@@ -45,19 +48,45 @@ shift:
     jmp     main_loop
 
 .globl main
+.globl jump_here
 main:
     # Checks argc == 2
     xor     eax, eax
     mov     edx, 2
     cmp     edx, edi
-    jne     invalid_argc
+    je      3f
 
+    # Checks argc == 3
+    xor     eax, eax
+    mov     edx, 3
+    cmp     edx, edi
+    je      4f
+
+    jmp invalid_argc
+
+4:
+    # Making argv[0] into a number
+    mov     rax, [rsi + 8]
+    mov     rax, [rax]
+    and     rax, 0x000000000000FFFF
+    cmp     rax, 28461
+    jne      end
+
+    # Making argv[1] into a number
+    mov     rdi, [rsi + 8*2]
+    mov     rsi, 0
+    mov     rdx, 10    
+    call    strtol
+    jmp     the_cmp
+
+3:
     # Making argv[0] into a number
     mov     rdi, [rsi + 8]
     mov     rsi, 0
     mov     rdx, 10    
     call    strtol
 
+the_cmp:
     # Checking if argv[0] <= 100
     mov     rdx, 100
     cmp     rdx, rax
