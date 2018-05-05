@@ -18,6 +18,11 @@ debug:  $(FILES)
 	gcc -o $(BINS) $(FILES) $(ASFLAGS) $(CPPFLAGS) $(CFLAGS)
 	$(MAKE) clean
 
+profile: CFLAGS += -pg
+profile: CPPFLAGS += -pg
+profile: $(FILES)
+	gcc -o $(BINS) $(FILES) $(ASFLAGS) $(CPPFLAGS) $(CFLAGS)
+	$(MAKE) clean
 
 build: $(FILES)
 	gcc -o $(BINS) $(FILES) $(ASFLAGS) $(CPPFLAGS) $(CFLAGS)
