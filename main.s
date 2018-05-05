@@ -1,5 +1,6 @@
 .intel_syntax noprefix
 
+# Defining my variables
 .data
 invalid_arg_msg:
     .asciz "Invalid amount of args!\n"
@@ -25,35 +26,42 @@ lower_bin:
 higher_bin:
     .quad 0
 
-lower:
+lower_str:
     .asciz "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
 
-higher:
+higher_str:
     .asciz "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
 
-result_output:
-    .asciz "%s%s\n"
+result_output_hex:
+    .asciz "0x%s%s\n"
+
+result_output_oct:
+    .asciz "0%s%s\n"
 
 .text
 
+# Printing invalid argc
 invalid_argc:
     mov     edi, OFFSET invalid_arg_msg
     call    puts
     jmp     end
 
+# Printing invalid argv
 invalid_argv:
     mov     edi, OFFSET invalid_value_msg
     call    puts
     jmp     end
 
+# Printing invalid - flag
 invalid_flag:
     mov     edi, OFFSET invalid_flag_msg
     call    puts
     jmp     end
 
+# Octal math, adding 1 if the 64th bit is set
 shift:
     add     rdi, 1
-    jmp     main_loop
+    jmp     main_fib_loop
 
 .globl main
 .globl jump_here
@@ -62,16 +70,16 @@ main:
     xor     eax, eax
     mov     edx, 2
     cmp     edx, edi
-    je      3f
+    je      2f
 
     # Checks argc == 3
     mov     edx, 3
     cmp     edx, edi
-    je      4f
+    je      1f
 
     jmp invalid_argc
 
-4:
+1:
     # Making argv[0] into a number
     mov     rax, [rsi + 8]
     mov     rax, [rax]
@@ -88,7 +96,7 @@ main:
     mov     QWORD PTR [oct_flag], 1
     jmp     the_cmp
 
-3:
+2:
     # Making argv[0] into a number
     mov     rdi, [rsi + 8]
     mov     rsi, 0
@@ -106,6 +114,7 @@ the_cmp:
     cmp     rdx, rax
     jg      invalid_argv
 
+    # rdi is for the higher_bin
     xor     rdi, rdi
 
     # If the value is 0
@@ -113,115 +122,111 @@ the_cmp:
     je      2f
 
     # Counter
-    mov     rcx, 0
-    # First
+    xor     rcx, rcx
+
+    # rsi Temp variable for r8
     xor     rsi, rsi
-    # Second
+
+    # r8 Stores the lower_bin
     mov     r8, 1
+
+    # rdx Carry tracker and higher_temp
     xor     rdx, rdx
 
-
-    mov     r11, 0x7FFFFFFFFFFFFFFF
+    # r9 Octal Mask for getting the 64th bit
+    mov     r9, 0x7FFFFFFFFFFFFFFF
 
     # Fib Loop
-1:
-main_loop:
+main_fib_loop:
+    # Is the loop done?
     cmp     rcx, rax
     je      2f
 
+    # counter++
     inc     rcx
 
+    # If the counter is 1
     cmp     rcx, 1
-    je      1b
+    je      main_fib_loop
 
+    # Main Fib math with the carry to the higher
     xadd    r8, rsi
     adc     rdx, 0
     xadd    rdi, rdx
 
+    # Do octal math if flag is set
     cmp     QWORD PTR [oct_flag], 1
     je      oct_carry
 
-    jmp     1b
+    jmp     main_fib_loop
 
+    # For octal carry the 64th bit
 oct_carry:
-    mov     r12, r8
-    and     r8, r11
-    cmp     r8, r12
+    mov     r10, r8
+    and     r8, r9
+    cmp     r8, r10
     jne     shift
-    jmp     1b
+    jmp     main_fib_loop
 
-
+    # Breaking out of loop and storing higher and lower
 2:
     mov     QWORD PTR [lower_bin], r8
     mov     QWORD PTR [higher_bin], rdi     
 
-   # higher = 0
+   # Skipping higher conversion
     cmp     rdi, 0
-    je      print_next
+    je      convert_lower
 
+    # Converting Higher Part
+    push    rbx
     mov     rcx, [higher_bin]
-    mov     rdi, OFFSET higher
-    jmp     bin_to_hex1
+    mov     rdi, OFFSET higher_str
+    mov     rsi, 32
 
-print_next:
+    # Is it octal?
+    cmp     QWORD PTR [oct_flag], 1
+    jne     1f
+    mov     rdx, OFFSET oct_format
+    jmp     2f
+1:
+    mov     rdx, OFFSET hex_format
+2:
+    call    snprintf
+    pop     rbx
+
+    # Converting Lower Part
+convert_lower:
+    push    rbx
     mov     rcx, [lower_bin]
-    mov     rdi, OFFSET lower
-    jmp     bin_to_hex2
+    mov     rdi, OFFSET lower_str
+    mov     rsi, 32
 
-results:
-    jmp     display_results
+    # Is it octal?
+    cmp     QWORD PTR [oct_flag], 1
+    jne     1f
+    mov     rdx, OFFSET oct_format
+    jmp     2f
+1:
+    mov     rdx, OFFSET hex_format
+2:
+    call    snprintf
+    pop     rbx
+
+    # Printing final results
+    push    rbx
+    cmp     QWORD PTR [oct_flag], 1
+    jne     1f
+    mov     rdi, OFFSET result_output_oct
+    jmp     2f
+1:
+    mov     rdi, OFFSET result_output_hex
+2:
+    mov     rsi, OFFSET higher_str
+    mov     rdx, OFFSET lower_str
+
+    call    printf
+    pop     rbx
+    xor     rax, rax
 
 end:
     ret
-
-
-bin_to_hex1:
-    push    rbx
-    mov     rsi, 32
-    
-    cmp     QWORD PTR [oct_flag], 1
-    jne     1f
-
-    mov     rdx, OFFSET oct_format
-    jmp     2f
-
-1:
-    mov     rdx, OFFSET hex_format
-
-2:
-    call    snprintf
-
-    pop     rbx
-    jmp     print_next
-
-bin_to_hex2:
-    push    rbx
-    mov     rsi, 32
-
-    cmp     QWORD PTR [oct_flag], 1
-    jne     1f
-
-    mov     rdx, OFFSET oct_format
-    jmp     2f
-
-1:
-    mov     rdx, OFFSET hex_format
-
-2:
-    call    snprintf
-
-    pop     rbx
-    jmp     results
-
-display_results:
-    # Printf result
-    push    rbx
-    mov     rdi, OFFSET result_output
-    mov     rsi, OFFSET higher
-    mov     rdx, OFFSET lower
-
-    call    printf
-    pop rbx
-    xor     rax, rax
-    jmp end
-
