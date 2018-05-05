@@ -32,8 +32,11 @@ lower_str:
 higher_str:
     .asciz "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
 
-result_output:
-    .asciz "%s%s\n"
+result_output_hex:
+    .asciz "0x%s%s\n"
+
+result_output_oct:
+    .asciz "0%s%s\n"
 
 .text
 
@@ -211,7 +214,13 @@ convert_lower:
 
     # Printing final results
     push    rbx
-    mov     rdi, OFFSET result_output
+    cmp     QWORD PTR [oct_flag], 1
+    jne     1f
+    mov     rdi, OFFSET result_output_oct
+    jmp     2f
+1:
+    mov     rdi, OFFSET result_output_hex
+2:
     mov     rsi, OFFSET higher_str
     mov     rdx, OFFSET lower_str
 
